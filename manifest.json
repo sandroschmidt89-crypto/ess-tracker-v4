@@ -1,0 +1,8 @@
+{
+"name":"EssTracker V4",
+"short_name":"EssTracker",
+"display":"standalone",
+"start_url":"./",
+"theme_color":"#ffffff",
+"background_color":"#ffffff"
+}
