@@ -1,0 +1,11 @@
+
+body{font-family:system-ui;background:#eef2f5;margin:0}
+header{background:#162338;color:#fff;padding:18px}
+nav{display:flex;gap:8px;padding:10px;background:#fff;overflow:auto}
+nav button{padding:10px;border-radius:12px;border:none;background:#ececec}
+.tab{padding:16px}
+.hidden{display:none}
+.card,.meal{background:#fff;padding:14px;border-radius:16px;margin:10px 0}
+.day{background:#dfe8f5;padding:12px;border-radius:12px;cursor:pointer;font-weight:bold}
+textarea,input,select,button{width:100%;padding:12px;box-sizing:border-box;margin:6px 0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
