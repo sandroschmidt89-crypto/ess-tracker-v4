@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="EssTracker"/>
+<meta name="theme-color" content="#1C1C2E"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>EssTracker</title>
+<style>
+  :root {
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --header: #1C1C2E;
+    --primary: #2563EB;
+    --primary-light: #EFF6FF;
+    --green: #22C55E;
+    --green-light: #F0FDF4;
+    --orange: #F97316;
+    --orange-light: #FFF7ED;
+    --red: #EF4444;
+    --red-light: #FEF2F2;
+    --purple: #A855F7;
+    --text: #111827;
+    --text2: #6B7280;
+    --text3: #9CA3AF;
+    --border: #E5E7EB;
+    --safe-top: env(safe-area-inset-top, 44px);
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);}
+  
+  /* Layout */
+  #app{display:flex;flex-direction:column;height:100%;height:100dvh;}
+  #header{background:var(--header);color:#fff;padding:calc(var(--safe-top) + 8px) 20px 14px;flex-shrink:0;}
+  #header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;}
+  #header .subtitle{font-size:13px;color:rgba(255,255,255,0.6);margin-top:1px;}
+  #content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px;}
+  #tabs{background:var(--card);border-top:1px solid var(--border);padding:8px 0 calc(var(--safe-bottom) + 2px);display:flex;flex-shrink:0;}
+  
+  /* Tabs */
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;transition:color 0.15s;}
+  .tab.active{color:var(--primary);}
+  .tab svg{width:24px;height:24px;}
+  
+  /* Pages */
+  .page{display:none;padding:0;}
+  .page.active{display:block;}
+  
+  /* Cards */
+  .card{background:var(--card);border-radius:14px;margin:12px 16px 0;overflow:hidden;}
+  .card-inner{padding:14px 16px;}
+  .card-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px;}
+  .divider{height:1px;background:var(--border);margin:0 16px;}
+  
+  /* Stats Grid */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);}
+  .stat-cell{background:var(--card);padding:14px 12px;}
+  .stat-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+  .stat-value{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+  .stat-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+  
+  /* Section Header */
+  .section-header{font-size:20px;font-weight:700;padding:20px 16px 4px;letter-spacing:-0.4px;}
+  .section-sub{font-size:13px;color:var(--text2);padding:0 16px 8px;}
+  
+  /* Week card */
+  .week-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);}
+  .week-cell{background:var(--card);padding:12px 14px;}
+  .week-label{font-size:12px;color:var(--text2);margin-bottom:2px;}
+  .week-val{font-size:18px;font-weight:700;}
+  .week-sub{font-size:11px;color:var(--text3);}
+  
+  /* Weight card */
+  .weight-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+  .weight-cell{background:var(--card);padding:14px 16px;}
+  
+  /* Tip card */
+  .tip-card{background:#FFFBEB;border-radius:14px;margin:12px 16px 0;padding:14px 16px;display:flex;gap:10px;}
+  .tip-card .icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+  .tip-card p{font-size:13px;color:#92400E;line-height:1.4;}
+  
+  /* Insight card */
+  .insight-card{background:var(--green-light);border-radius:14px;margin:12px 16px 0;padding:14px 16px;border:1px solid #BBF7D0;}
+  .insight-card h3{font-size:13px;font-weight:700;color:#15803D;margin-bottom:4px;}
+  .insight-card p{font-size:13px;color:#166534;line-height:1.45;}
+  
+  /* Form */
+  .form-section{padding:16px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{font-size:14px;font-weight:600;margin-bottom:6px;display:block;}
+  .form-sub{font-size:12px;color:var(--text2);margin-bottom:6px;}
+  .form-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;background:var(--card);color:var(--text);-webkit-appearance:none;appearance:none;outline:none;transition:border-color 0.15s;}
+  .form-input:focus{border-color:var(--primary);}
+  select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+  
+  .btn-primary{width:100%;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity 0.15s;}
+  .btn-primary:active{opacity:0.85;}
+  .btn-secondary{width:100%;padding:13px;background:var(--card);color:var(--primary);border:1.5px solid var(--border);border-radius:12px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  
+  /* Meal list */
+  .day-group{margin:12px 16px 0;}
+  .day-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--card);border-radius:14px;cursor:pointer;font-weight:600;font-size:15px;}
+  .day-header .day-meta{display:flex;align-items:center;gap:8px;}
+  .day-header .count{font-size:13px;color:var(--text2);font-weight:400;}
+  .day-header .chevron{color:var(--text3);transition:transform 0.2s;font-size:18px;}
+  .day-header.open .chevron{transform:rotate(180deg);}
+  .day-meals{margin-top:2px;border-radius:12px;overflow:hidden;}
+  .meal-item{background:var(--card);padding:12px 14px;border-bottom:1px solid var(--border);}
+  .meal-item:last-child{border-bottom:none;border-radius:0 0 12px 12px;}
+  .meal-row{display:flex;justify-content:space-between;align-items:flex-start;}
+  .meal-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+  .meal-time{font-size:13px;color:var(--text2);flex-shrink:0;margin-left:8px;}
+  .meal-desc{font-size:13px;color:var(--text2);margin-bottom:6px;line-height:1.4;}
+  .meal-stats{display:flex;gap:14px;font-size:12px;color:var(--text2);}
+  .meal-emoji{font-size:16px;}
+  .meal-delete{background:none;border:none;color:var(--red);font-size:13px;padding:4px 0;cursor:pointer;margin-top:4px;}
+  
+  /* Hint */
+  .hint-card{margin:12px 16px 0;padding:12px 14px;background:var(--primary-light);border-radius:12px;font-size:13px;color:var(--primary);display:flex;gap:8px;align-items:flex-start;}
+  
+  /* Weight page */
+  .weight-input-card{margin:12px 16px 0;}
+  .weight-history{margin:12px 16px 0;}
+  .weight-history-item{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);}
+  .weight-history-item:last-child{border-bottom:none;}
+  .weight-history-date{font-size:14px;color:var(--text2);}
+  .weight-history-val{font-size:15px;font-weight:600;}
+  .weight-history-val.current{color:var(--primary);}
+  .show-all-btn{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;color:var(--primary);font-size:14px;font-weight:500;cursor:pointer;background:none;border:none;width:100%;font-family:inherit;}
+  
+  /* Analysis */
+  .analysis-tabs{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;}
+  .analysis-tab{padding:7px 18px;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;background:var(--card);color:var(--text2);border:1.5px solid var(--border);transition:all 0.15s;}
+  .analysis-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);}
+  .metric-cell{background:var(--card);padding:16px;}
+  .metric-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+  .metric-value{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .metric-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+  .metric-icon{font-size:20px;}
+  
+  /* Settings / Mehr */
+  .list-group{margin:12px 16px 0;border-radius:14px;overflow:hidden;}
+  .list-item{background:var(--card);display:flex;align-items:center;padding:14px 16px;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);}
+  .list-item:last-child{border-bottom:none;}
+  .list-item-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .list-item-label{flex:1;font-size:16px;}
+  .list-item-chevron{color:var(--text3);font-size:16px;}
+  .list-item.danger .list-item-label{color:var(--red);}
+  .list-item.danger .list-item-icon{background:#FEE2E2;}
+  
+  /* Toast */
+  #toast{position:fixed;bottom:calc(var(--safe-bottom) + 80px);left:50%;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:10px 20px;border-radius:24px;font-size:14px;font-weight:500;opacity:0;transition:all 0.25s;z-index:999;white-space:nowrap;pointer-events:none;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  
+  /* Progress bar */
+  .progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px;}
+  .progress-fill{height:100%;border-radius:2px;background:var(--primary);transition:width 0.4s;}
+  
+  /* Trend arrow */
+  .trend{display:inline-flex;align-items:center;gap:3px;font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+  .trend.down{color:var(--green);}
+  .trend.up{color:var(--red);}
+  
+  /* Mood selector */
+  .mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .mood-btn{padding:10px 0;border:1.5px solid var(--border);border-radius:10px;background:var(--card);font-size:22px;cursor:pointer;text-align:center;transition:all 0.15s;}
+  .mood-btn.selected{border-color:var(--primary);background:var(--primary-light);}
+  
+  /* Slider-like select styling */
+  .scale-display{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px;padding:0 2px;}
+  
+  /* Empty state */
+  .empty-state{text-align:center;padding:60px 32px;color:var(--text3);}
+  .empty-state .emoji{font-size:48px;margin-bottom:12px;}
+  .empty-state p{font-size:15px;line-height:1.5;}
+
+  /* Mehr page header */
+  .mehr-header{padding:20px 16px 8px;}
+  .mehr-header h2{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .mehr-section-label{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;padding:14px 16px 4px;}
+  
+  /* Goals modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:flex-end;}
+  .modal-overlay.open{display:flex;}
+  .modal-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto;padding-bottom:calc(var(--safe-bottom) + 20px);}
+  .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+  .modal-title{font-size:20px;font-weight:700;margin-bottom:16px;}
+  .modal-close{float:right;background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;line-height:1;margin-top:-4px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <h1 id="page-title">🍽️ EssTracker</h1>
+    <div class="subtitle" id="page-subtitle">Dashboard</div>
+  </div>
+
+  <div id="content">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard"></div>
+
+    <!-- MAHLZEIT ERFASSEN -->
+    <div class="page" id="page-mahlzeit">
+      <div class="form-section">
+        <div class="form-group">
+          <label class="form-label">Was gab es? 🍴</label>
+          <input type="text" id="f-was" class="form-input" placeholder="z. B. Skyr mit Beeren und Nüssen"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mahlzeit</label>
+          <select id="f-typ" class="form-input">
+            <option>Frühstück</option><option>Mittagessen</option><option>Abendessen</option><option>Snack</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Hunger <span class="form-sub" style="display:inline;font-weight:400;font-size:12px;">(0 = kein Hunger, 10 = extrem)</span></label>
+          <select id="f-hunger" class="form-input">
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sättigung <span class="form-sub" style="display:inline;font-weight:400;font-size:12px;">(0 = gar nicht satt, 10 = sehr satt)</span></label>
+          <select id="f-saettigung" class="form-input">
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stimmung</label>
+          <select id="f-stimmung" class="form-input">
+            <option>😢 Schlecht</option><option>😐 Ok</option><option selected>😊 Gut</option><option>😄 Sehr gut</option><option>🤩 Fantastisch</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heißhunger?</label>
+          <select id="f-heisshunger" class="form-input">
+            <option selected>Nein</option><option>Ja</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Genuss <span class="form-sub" style="display:inline;font-weight:400;font-size:12px;">(0–10)</span></label>
+          <select id="f-genuss" class="form-input">
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gesundheit <span class="form-sub" style="display:inline;font-weight:400;font-size:12px;">(0 = ungesund, 10 = sehr gesund)</span></label>
+          <select id="f-gesundheit" class="form-input">
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Portionsgefühl <span class="form-sub" style="display:inline;font-weight:400;font-size:12px;">(0 = zu wenig, 10 = zu viel)</span></label>
+          <select id="f-portion" class="form-input">
+            <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="saveMeal()">💾 Speichern</button>
+        <button class="btn-secondary" onclick="clearForm()">🔄 Felder leeren</button>
+      </div>
+    </div>
+
+    <!-- GEWICHT -->
+    <div class="page" id="page-gewicht">
+      <div class="weight-input-card card">
+        <div class="card-inner">
+          <div class="card-title">Gewicht eintragen</div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <input type="number" id="w-kg" class="form-input" placeholder="z. B. 99.3" step="0.1" min="30" max="300"/>
+          </div>
+          <button class="btn-primary" onclick="saveWeight()">💾 Speichern</button>
+        </div>
+      </div>
+      <div class="card weight-history">
+        <div class="card-inner" style="padding-bottom:0;">
+          <div class="card-title">Verlauf</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">letzter Wert pro Tag</div>
+        </div>
+        <div id="weight-history-list"></div>
+      </div>
+    </div>
+
+    <!-- MAHLZEITEN LISTE -->
+    <div class="page" id="page-liste">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 4px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;">Nach Tagen gruppiert</div>
+        <span id="expand-all-btn" onclick="toggleAllDays()" style="color:var(--primary);font-size:13px;font-weight:500;cursor:pointer;">Alle aufklappen</span>
+      </div>
+      <div id="meal-list"></div>
+      <div class="hint-card">
+        <span>ℹ️</span>
+        <span>Tippe auf einen Tag, um die Mahlzeiten anzuzeigen oder auszublenden.</span>
+      </div>
+    </div>
+
+    <!-- ANALYSE -->
+    <div class="page" id="page-analyse">
+      <div class="analysis-tabs" id="analysis-tabs">
+        <button class="analysis-tab active" onclick="setAnalysisTab('uebersicht',this)">Übersicht</button>
+        <button class="analysis-tab" onclick="setAnalysisTab('muster',this)">Muster</button>
+        <button class="analysis-tab" onclick="setAnalysisTab('vergleiche',this)">Vergleiche</button>
+      </div>
+      <div id="analyse-content"></div>
+    </div>
+
+    <!-- MEHR -->
+    <div class="page" id="page-mehr">
+      <div class="mehr-header">
+        <h2>Mehr</h2>
+      </div>
+      <div class="mehr-section-label">Daten & Backup</div>
+      <div class="list-group">
+        <div class="list-item" onclick="exportData()">
+          <div class="list-item-icon" style="background:#EFF6FF;">📤</div>
+          <div class="list-item-label">Exportieren</div>
+          <div class="list-item-chevron">›</div>
+        </div>
+        <div class="list-item" onclick="importData()">
+          <div class="list-item-icon" style="background:#F0FDF4;">📥</div>
+          <div class="list-item-label">Importieren</div>
+          <div class="list-item-chevron">›</div>
+        </div>
+        <div class="list-item danger" onclick="confirmDelete()">
+          <div class="list-item-icon">🗑️</div>
+          <div class="list-item-label">Alle Daten löschen</div>
+          <div class="list-item-chevron" style="color:var(--red);">›</div>
+        </div>
+      </div>
+      <div class="mehr-section-label">Einstellungen</div>
+      <div class="list-group">
+        <div class="list-item" onclick="openGoals()">
+          <div class="list-item-icon" style="background:#FFF7ED;">🎯</div>
+          <div class="list-item-label">Ziele & Bereiche</div>
+          <div class="list-item-chevron">›</div>
+        </div>
+        <div class="list-item" style="opacity:0.5;">
+          <div class="list-item-icon" style="background:#F5F5F5;">🔔</div>
+          <div class="list-item-label">Erinnerungen <span style="font-size:12px;color:var(--text3);">(bald verfügbar)</span></div>
+          <div class="list-item-chevron">›</div>
+        </div>
+      </div>
+      <div class="mehr-section-label">Info</div>
+      <div class="list-group">
+        <div class="list-item" onclick="showAbout()">
+          <div class="list-item-icon" style="background:#F3E8FF;">ℹ️</div>
+          <div class="list-item-label">Über EssTracker</div>
+          <div class="list-item-chevron">›</div>
+        </div>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)"/>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="tab" onclick="switchTab('mahlzeit')" id="tab-mahlzeit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>
+      Mahlzeit
+    </div>
+    <div class="tab" onclick="switchTab('gewicht')" id="tab-gewicht">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+      Gewicht
+    </div>
+    <div class="tab" onclick="switchTab('analyse')" id="tab-analyse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analyse
+    </div>
+    <div class="tab" onclick="switchTab('mehr')" id="tab-mehr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      Mehr
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Goals Modal -->
+<div class="modal-overlay" id="goals-modal" onclick="closeGoalsIfOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeGoals()">×</button>
+    <div class="modal-title">🎯 Ziele & Bereiche</div>
+    <div class="form-group">
+      <label class="form-label">Mahlzeiten pro Tag (Ziel)</label>
+      <select id="g-meals" class="form-input">
+        <option>1–2</option><option selected>3–5</option><option>5–7</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gewichtsziel (kg)</label>
+      <input type="number" id="g-weight" class="form-input" placeholder="z. B. 90" step="0.5"/>
+    </div>
+    <button class="btn-primary" onclick="saveGoals()">💾 Ziele speichern</button>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────
+let meals = JSON.parse(localStorage.getItem('et_meals') || '[]');
+let weights = JSON.parse(localStorage.getItem('et_weights') || '[]');
+let goals = JSON.parse(localStorage.getItem('et_goals') || '{"meals":"3–5","weight":null}');
+let allDaysExpanded = false;
+let openDays = new Set();
+let currentAnalysisTab = 'uebersicht';
+
+function save() {
+  localStorage.setItem('et_meals', JSON.stringify(meals));
+  localStorage.setItem('et_weights', JSON.stringify(weights));
+  localStorage.setItem('et_goals', JSON.stringify(goals));
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+function formatDate(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  const days = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const months = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+function formatDateShort(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  return `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`;
+}
+function nowTime() {
+  return new Date().toTimeString().slice(0,5);
+}
+function avg(arr) {
+  if(!arr.length) return 0;
+  return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+function moodEmoji(s) {
+  if(s.includes('😄')||s.includes('Sehr')) return '😄';
+  if(s.includes('🤩')||s.includes('Fanta')) return '🤩';
+  if(s.includes('😊')||s.includes('Gut')) return '😊';
+  if(s.includes('😐')||s.includes('Ok')) return '😐';
+  return '😢';
+}
+function satiEmoji(v) {
+  if(v>=8) return '😊';
+  if(v>=5) return '😐';
+  return '😕';
+}
+function getDayLabel(iso) {
+  const t = today();
+  if(iso===t) return '☀️ ' + formatDateShort(iso);
+  const yest = new Date(); yest.setDate(yest.getDate()-1);
+  const yIso = yest.toISOString().slice(0,10);
+  if(iso===yIso) return '📅 ' + formatDateShort(iso);
+  return '📅 ' + formatDateShort(iso);
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// ─── TABS ────────────────────────────────────────────────────
+const tabPages = {
+  dashboard: {page:'page-dashboard', title:'🍽️ EssTracker', sub:'Dashboard'},
+  mahlzeit: {page:'page-mahlzeit', title:'Mahlzeit erfassen', sub:''},
+  gewicht: {page:'page-gewicht', title:'Gewicht', sub:''},
+  liste: {page:'page-liste', title:'Mahlzeiten', sub:''},
+  analyse: {page:'page-analyse', title:'Analyse', sub:''},
+  mehr: {page:'page-mehr', title:'Mehr', sub:''},
+};
+let currentTab = 'dashboard';
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabPages[tab].page).classList.add('active');
+  const tabEl = document.getElementById('tab-'+tab);
+  if(tabEl) tabEl.classList.add('active');
+  document.getElementById('page-title').textContent = tabPages[tab].title;
+  document.getElementById('page-subtitle').textContent = tabPages[tab].sub;
+  currentTab = tab;
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='liste') renderMealList();
+  if(tab==='gewicht') renderWeightHistory();
+  if(tab==='analyse') renderAnalysis();
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+function renderDashboard() {
+  const todayMeals = meals.filter(m=>m.date===today());
+  const last7 = meals.filter(m=>{
+    const d = new Date(m.date); const ago = new Date(); ago.setDate(ago.getDate()-6);
+    return d>=ago;
+  });
+
+  const todayMealCount = todayMeals.length;
+  const todayAvgHunger = todayMeals.length ? avg(todayMeals.map(m=>m.hunger)).toFixed(1) : '–';
+  const todayAvgSat = todayMeals.length ? avg(todayMeals.map(m=>m.saettigung)).toFixed(1) : '–';
+
+  // 7-day stats
+  const days7 = new Set(last7.map(m=>m.date)).size || 1;
+  const week7Count = last7.length;
+  const week7Hunger = last7.length ? avg(last7.map(m=>m.hunger)).toFixed(1) : '–';
+  const week7Sat = last7.length ? avg(last7.map(m=>m.saettigung)).toFixed(1) : '–';
+  const heissCount = last7.filter(m=>m.heisshunger==='Ja').length;
+  const heissQuote = last7.length ? Math.round(heissCount/last7.length*100) : 0;
+  const goodMood = last7.filter(m=>m.stimmung.includes('😊')||m.stimmung.includes('😄')||m.stimmung.includes('🤩')).length;
+  const moodPct = last7.length ? Math.round(goodMood/last7.length*100) : 0;
+
+  // Weight
+  const latestWeight = weights.length ? weights[weights.length-1].kg : null;
+  const startWeight = weights.length>1 ? weights[0].kg : null;
+  const change7 = (() => {
+    const ago = new Date(); ago.setDate(ago.getDate()-7);
+    const old = weights.filter(w=>new Date(w.date)<=ago);
+    if(!old.length || !latestWeight) return null;
+    return (latestWeight - old[old.length-1].kg).toFixed(1);
+  })();
+
+  // Tip
+  const tips = [
+    'Deine durchschnittliche Sättigung ist diese Woche sehr gut! 🎉',
+    'Versuche, mehr auf dein Hungergefühl zu achten.',
+    'Regelmäßige Mahlzeiten helfen, Heißhunger zu vermeiden.',
+    'Du trackst super konsequent – weiter so! 💪',
+  ];
+  const tip = todayMeals.length > 0 ? tips[0] : tips[Math.floor(Math.random()*tips.length)];
+
+  const weekRange = (() => {
+    const now = new Date();
+    const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    const fmt = d=>`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.`;
+    return `${fmt(mon)}–${fmt(sun)}${sun.getFullYear()}`;
+  })();
+
+  document.getElementById('page-dashboard').innerHTML = `
+    <div class="section-header">Heute – ${formatDateShort(today())}</div>
+
+    <div class="card" style="margin:8px 16px 0;">
+      <div class="stat-grid">
+        <div class="stat-cell">
+          <div class="stat-label">🍴 Mahlzeiten</div>
+          <div class="stat-value">${todayMealCount}</div>
+          <div class="stat-sub">Ziel: ${goals.meals}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,todayMealCount/5*100)}%;"></div></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label" style="color:var(--orange);">🔥 Ø Hunger</div>
+          <div class="stat-value" style="color:var(--orange);">${todayAvgHunger}</div>
+          <div class="stat-sub">von 10</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label" style="color:var(--green);">😊 Ø Sättigung</div>
+          <div class="stat-value" style="color:var(--green);">${todayAvgSat}</div>
+          <div class="stat-sub">von 10</div>
+        </div>
+      </div>
+    </div>
+
+    ${latestWeight !== null ? `
+    <div class="card" style="margin:12px 16px 0;">
+      <div class="weight-row">
+        <div class="weight-cell">
+          <div class="card-title">Aktuelles Gewicht</div>
+          <div style="font-size:28px;font-weight:700;letter-spacing:-0.5px;">${latestWeight} <span style="font-size:16px;font-weight:500;color:var(--text2);">kg</span></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">Letzter Eintrag: ${formatDateShort(weights[weights.length-1].date)}</div>
+        </div>
+        <div class="weight-cell">
+          <div class="card-title">Veränderung (7 Tage)</div>
+          <div class="trend ${change7===null?'':parseFloat(change7)<0?'down':'up'}">
+            ${change7===null?'–':(parseFloat(change7)<0?'↘':parseFloat(change7)>0?'↗':'→')+' '+change7+' kg'}
+          </div>
+          ${startWeight !== null ? `<div style="font-size:12px;color:var(--text3);margin-top:4px;">Zum Start: ${(latestWeight-startWeight).toFixed(1)} kg</div>` : ''}
+        </div>
+      </div>
+    </div>` : `
+    <div class="hint-card" onclick="switchTab('gewicht')" style="cursor:pointer;">
+      <span>⚖️</span><span>Noch kein Gewicht eingetragen. Tippe hier, um es zu ergänzen.</span>
+    </div>`}
+
+    <div class="card" style="margin:12px 16px 0;">
+      <div class="stat-grid">
+        <div class="stat-cell" style="grid-column:span 1;">
+          <div class="stat-label">🔥 Heißhunger<br>(7 Tage)</div>
+          <div class="stat-value" style="color:var(--orange);">${heissQuote} %</div>
+          <div class="stat-sub">von ${last7.length} Mahlz.</div>
+        </div>
+        <div class="stat-cell" style="grid-column:span 2;">
+          <div class="stat-label">😊 Gute Stimmung (7 Tage)</div>
+          <div class="stat-value" style="color:var(--green);">${moodPct} %</div>
+          <div class="stat-sub">von ${last7.length} Mahlzeiten</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:16px 16px 4px;font-size:15px;font-weight:700;">Diese Woche</div>
+    <div style="padding:0 16px 8px;font-size:12px;color:var(--text2);">(${weekRange})</div>
+    <div class="card" style="margin:0 16px;">
+      <div class="week-row">
+        <div class="week-cell">
+          <div class="week-label">Mahlzeiten</div>
+          <div class="week-val">${week7Count}</div>
+          <div class="week-sub">Ø ${(week7Count/Math.max(days7,1)).toFixed(1)} pro Tag</div>
+        </div>
+        <div class="week-cell">
+          <div class="week-label">Ø Hunger</div>
+          <div class="week-val">${week7Hunger}</div>
+          <div class="week-sub">von 10</div>
+        </div>
+        <div class="week-cell">
+          <div class="week-label">Ø Sättigung</div>
+          <div class="week-val">${week7Sat}</div>
+          <div class="week-sub">von 10</div>
+        </div>
+      </div>
+    </div>
+
+    ${todayMeals.length > 0 ? `
+    <div class="tip-card">
+      <div class="icon">💡</div>
+      <p>${tip}</p>
+    </div>` : ''}
+
+    <div class="card" style="margin:12px 16px 0;cursor:pointer;" onclick="switchTab('liste')">
+      <div class="card-inner" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:600;font-size:15px;">Heutige Mahlzeiten</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px;">${todayMeals.length} eingetragen</div>
+        </div>
+        <div style="color:var(--primary);font-size:20px;">›</div>
+      </div>
+    </div>
+
+    <div style="height:16px;"></div>
+  `;
+}
+
+// ─── MEAL FORM ────────────────────────────────────────────────
+function saveMeal() {
+  const was = document.getElementById('f-was').value.trim();
+  if(!was){toast('❗ Bitte Mahlzeit eingeben');return;}
+  const meal = {
+    id: Date.now(),
+    date: today(),
+    time: nowTime(),
+    was,
+    typ: document.getElementById('f-typ').value,
+    hunger: parseInt(document.getElementById('f-hunger').value),
+    saettigung: parseInt(document.getElementById('f-saettigung').value),
+    stimmung: document.getElementById('f-stimmung').value,
+    heisshunger: document.getElementById('f-heisshunger').value,
+    genuss: parseInt(document.getElementById('f-genuss').value),
+    gesundheit: parseInt(document.getElementById('f-gesundheit').value),
+    portion: parseInt(document.getElementById('f-portion').value),
+  };
+  meals.push(meal);
+  save();
+  toast('✅ Mahlzeit gespeichert!');
+  clearForm();
+}
+
+function clearForm() {
+  document.getElementById('f-was').value='';
+  document.getElementById('f-hunger').value='6';
+  document.getElementById('f-saettigung').value='8';
+  document.getElementById('f-stimmung').value='😊 Gut';
+  document.getElementById('f-heisshunger').value='Nein';
+  document.getElementById('f-genuss').value='7';
+  document.getElementById('f-gesundheit').value='8';
+  document.getElementById('f-portion').value='6';
+}
+
+// ─── MEAL LIST ───────────────────────────────────────────────
+function renderMealList() {
+  const grouped = {};
+  meals.slice().reverse().forEach(m=>{
+    if(!grouped[m.date]) grouped[m.date]=[];
+    grouped[m.date].push(m);
+  });
+  const dates = Object.keys(grouped).sort().reverse();
+  const container = document.getElementById('meal-list');
+  if(!dates.length){
+    container.innerHTML = `<div class="empty-state"><div class="emoji">🍽️</div><p>Noch keine Mahlzeiten eingetragen.<br>Wechsle zum Tab „Mahlzeit", um zu starten.</p></div>`;
+    return;
+  }
+  // Open today by default
+  if(grouped[today()]) openDays.add(today());
+  container.innerHTML = dates.map(date=>{
+    const dayMeals = grouped[date];
+    const isOpen = openDays.has(date);
+    return `
+    <div class="day-group">
+      <div class="day-header ${isOpen?'open':''}" onclick="toggleDay('${date}')">
+        <div class="day-meta">
+          <span>${getDayLabel(date)}</span>
+          <span class="count">(${dayMeals.length} Mahlzeit${dayMeals.length!==1?'en':''})</span>
+        </div>
+        <span class="chevron">⌄</span>
+      </div>
+      ${isOpen ? `<div class="day-meals">${dayMeals.map(m=>`
+        <div class="meal-item">
+          <div class="meal-row">
+            <div>
+              <div class="meal-name">${m.typ}</div>
+              <div class="meal-desc">${m.was}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meal-time">${m.time}</div>
+              <div class="meal-emoji">${satiEmoji(m.saettigung)}</div>
+            </div>
+          </div>
+          <div class="meal-stats">
+            <span>Hunger: ${m.hunger}</span>
+            <span>Sättigung: ${m.saettigung}</span>
+            <span>${moodEmoji(m.stimmung)}</span>
+          </div>
+          <button class="meal-delete" onclick="deleteMeal(${m.id})">🗑️ Löschen</button>
+        </div>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleDay(date) {
+  if(openDays.has(date)) openDays.delete(date); else openDays.add(date);
+  renderMealList();
+}
+
+function toggleAllDays() {
+  allDaysExpanded = !allDaysExpanded;
+  const grouped = {};
+  meals.forEach(m=>{if(!grouped[m.date])grouped[m.date]=[];grouped[m.date].push(m);});
+  const dates = Object.keys(grouped);
+  openDays = allDaysExpanded ? new Set(dates) : new Set();
+  document.getElementById('expand-all-btn').textContent = allDaysExpanded ? 'Alle zuklappen' : 'Alle aufklappen';
+  renderMealList();
+}
+
+function deleteMeal(id) {
+  if(!confirm('Mahlzeit löschen?')) return;
+  meals = meals.filter(m=>m.id!==id);
+  save();
+  renderMealList();
+  toast('🗑️ Mahlzeit gelöscht');
+}
+
+// ─── WEIGHT ──────────────────────────────────────────────────
+function saveWeight() {
+  const val = parseFloat(document.getElementById('w-kg').value);
+  if(isNaN(val)||val<20||val>500){toast('❗ Gültiges Gewicht eingeben');return;}
+  weights.push({date:today(), kg:val, ts:Date.now()});
+  save();
+  document.getElementById('w-kg').value='';
+  toast('✅ Gewicht gespeichert!');
+  renderWeightHistory();
+}
+
+function renderWeightHistory() {
+  const byDay = {};
+  weights.forEach(w=>{byDay[w.date]=w.kg;});
+  const dates = Object.keys(byDay).sort().reverse();
+  const list = document.getElementById('weight-history-list');
+  if(!dates.length){
+    list.innerHTML='<div style="padding:16px;font-size:14px;color:var(--text3);">Noch keine Einträge.</div>';
+    return;
+  }
+  const show = dates.slice(0,7);
+  list.innerHTML = show.map((d,i)=>`
+    <div class="weight-history-item">
+      <span class="weight-history-date">${formatDateShort(d)}</span>
+      <span class="weight-history-val ${i===0?'current':''}">${byDay[d].toFixed(1)} kg</span>
+    </div>`).join('')
+  + (dates.length>7?`<button class="show-all-btn" onclick="showAllWeights()">Alle Einträge anzeigen <span>›</span></button>`:'');
+}
+
+function showAllWeights() {
+  const byDay = {};
+  weights.forEach(w=>{byDay[w.date]=w.kg;});
+  const dates = Object.keys(byDay).sort().reverse();
+  const list = document.getElementById('weight-history-list');
+  list.innerHTML = dates.map((d,i)=>`
+    <div class="weight-history-item">
+      <span class="weight-history-date">${formatDateShort(d)}</span>
+      <span class="weight-history-val ${i===0?'current':''}">${byDay[d].toFixed(1)} kg</span>
+    </div>`).join('');
+}
+
+// ─── ANALYSE ─────────────────────────────────────────────────
+function setAnalysisTab(tab, el) {
+  currentAnalysisTab = tab;
+  document.querySelectorAll('.analysis-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAnalysis();
+}
+
+function renderAnalysis() {
+  const last7 = meals.filter(m=>{
+    const d=new Date(m.date); const ago=new Date(); ago.setDate(ago.getDate()-6); return d>=ago;
+  });
+  const container = document.getElementById('analyse-content');
+
+  if(currentAnalysisTab === 'uebersicht') {
+    const avgHunger = last7.length ? avg(last7.map(m=>m.hunger)).toFixed(1) : '–';
+    const avgSat = last7.length ? avg(last7.map(m=>m.saettigung)).toFixed(1) : '–';
+    const heissCount = last7.filter(m=>m.heisshunger==='Ja').length;
+    const heissQ = last7.length ? Math.round(heissCount/last7.length*100) : 0;
+    const goodMood = last7.filter(m=>m.stimmung.includes('😊')||m.stimmung.includes('😄')||m.stimmung.includes('🤩')).length;
+    const moodPct = last7.length ? Math.round(goodMood/last7.length*100) : 0;
+    const avgGenuss = last7.length ? avg(last7.map(m=>m.genuss)).toFixed(1) : '–';
+    const avgGes = last7.length ? avg(last7.map(m=>m.gesundheit)).toFixed(1) : '–';
+    const avgPort = last7.length ? avg(last7.map(m=>m.portion)).toFixed(1) : '–';
+
+    // Insight
+    const highGes = last7.filter(m=>m.gesundheit>=8);
+    const satWithHighGes = highGes.length ? avg(highGes.map(m=>m.saettigung)).toFixed(1) : null;
+    const insight = satWithHighGes
+      ? `Deine höchste Sättigung erreichst du im Schnitt bei Mahlzeiten mit hohem Gesundheitswert (Ø ${satWithHighGes}). Weiter so! 👆`
+      : last7.length > 0 ? `Du hast diese Woche ${last7.length} Mahlzeiten getrackt. Weiter so! 💪`
+      : 'Noch keine Daten für diese Woche. Fang an zu tracken! 🚀';
+
+    container.innerHTML = `
+      <div style="padding:12px 16px 4px;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;">Übersicht (letzte 7 Tage)</div>
+      <div class="card" style="margin:4px 16px 0;">
+        <div class="metric-grid">
+          <div class="metric-cell">
+            <div class="metric-label">🔥 Ø Hunger</div>
+            <div class="metric-value">${avgHunger}</div>
+            <div class="metric-sub">von 10</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label" style="color:var(--green);">😊 Ø Sättigung</div>
+            <div class="metric-value" style="color:var(--green);">${avgSat}</div>
+            <div class="metric-sub">von 10</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label" style="color:var(--orange);">🔥 Heißhungerquote</div>
+            <div class="metric-value" style="color:var(--orange);">${heissQ} %</div>
+            <div class="metric-sub">von ${last7.length} Mahlz.</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label" style="color:var(--green);">😊 Gute Stimmung</div>
+            <div class="metric-value" style="color:var(--green);">${moodPct} %</div>
+            <div class="metric-sub">von ${last7.length} Mahlz.</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label" style="color:var(--purple);">⭐ Ø Genuss</div>
+            <div class="metric-value" style="color:var(--purple);">${avgGenuss}</div>
+            <div class="metric-sub">von 10</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-label" style="color:var(--red);">❤️ Ø Gesundheit</div>
+            <div class="metric-value" style="color:var(--red);">${avgGes}</div>
+            <div class="metric-sub">von 10</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="card-inner">
+          <div class="metric-label" style="margin-bottom:8px;">📦 Ø Portionsgefühl</div>
+          <div class="metric-value">${avgPort}</div>
+          <div class="metric-sub">von 10</div>
+        </div>
+      </div>
+      ${last7.length>0?`<div class="insight-card">
+        <h3>Erkenntnis</h3>
+        <p>${insight}</p>
+      </div>`:''}
+      <div style="height:16px;"></div>`;
+
+  } else if(currentAnalysisTab === 'muster') {
+    // Meals by type
+    const byType = {};
+    meals.forEach(m=>{byType[m.typ]=(byType[m.typ]||0)+1;});
+    const typeRows = Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+
+    // Meals by weekday
+    const byDay = ['So','Mo','Di','Mi','Do','Fr','Sa'].map((_,i)=>{
+      const count = meals.filter(m=>new Date(m.date+'T12:00:00').getDay()===i).length;
+      return count;
+    });
+    const maxDay = Math.max(...byDay, 1);
+
+    container.innerHTML = `
+      <div style="padding:12px 16px 4px;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;">Mahlzeiten nach Typ (Gesamt)</div>
+      <div class="card" style="margin:4px 16px 0;">
+        <div class="card-inner">
+          ${typeRows.length ? typeRows.map(([type,cnt])=>`
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-size:14px;font-weight:500;">${type}</span>
+                <span style="font-size:14px;color:var(--text2);">${cnt}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${cnt/typeRows[0][1]*100}%;"></div></div>
+            </div>`).join('') : '<div style="color:var(--text3);font-size:14px;">Keine Daten</div>'}
+        </div>
+      </div>
+      <div style="padding:12px 16px 4px;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;">Mahlzeiten nach Wochentag</div>
+      <div class="card" style="margin:4px 16px 0;">
+        <div class="card-inner">
+          ${['Mo','Di','Mi','Do','Fr','Sa','So'].map((d,i)=>{
+            const idx = (i+1)%7;
+            const cnt = byDay[idx];
+            return `<div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:14px;font-weight:500;">${d}</span>
+                <span style="font-size:14px;color:var(--text2);">${cnt}</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${cnt/maxDay*100}%;"></div></div>
+            </div>`;}).join('')}
+        </div>
+      </div>
+      <div style="height:16px;"></div>`;
+
+  } else {
+    // Vergleiche
+    const periods = [7,14,30];
+    const periodData = periods.map(days=>{
+      const ago = new Date(); ago.setDate(ago.getDate()-days);
+      const ms = meals.filter(m=>new Date(m.date)>=ago);
+      return {
+        days,
+        count: ms.length,
+        hunger: ms.length ? avg(ms.map(m=>m.hunger)).toFixed(1) : '–',
+        sat: ms.length ? avg(ms.map(m=>m.saettigung)).toFixed(1) : '–',
+        gesundheit: ms.length ? avg(ms.map(m=>m.gesundheit)).toFixed(1) : '–',
+      };
+    });
+
+    container.innerHTML = `
+      <div style="padding:12px 16px 4px;font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;">Zeiträume vergleichen</div>
+      <div class="card" style="margin:4px 16px 0;">
+        <div class="card-inner">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="text-align:left;padding:6px 0;font-weight:600;color:var(--text2);">Metrik</th>
+                <th style="text-align:center;padding:6px 4px;font-weight:600;color:var(--text2);">7 Tage</th>
+                <th style="text-align:center;padding:6px 4px;font-weight:600;color:var(--text2);">14 Tage</th>
+                <th style="text-align:center;padding:6px 4px;font-weight:600;color:var(--text2);">30 Tage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:10px 0;font-weight:500;">🍴 Mahlzeiten</td>
+                ${periodData.map(p=>`<td style="text-align:center;padding:10px 4px;">${p.count}</td>`).join('')}
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:10px 0;font-weight:500;">🔥 Ø Hunger</td>
+                ${periodData.map(p=>`<td style="text-align:center;padding:10px 4px;">${p.hunger}</td>`).join('')}
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:10px 0;font-weight:500;">😊 Ø Sättigung</td>
+                ${periodData.map(p=>`<td style="text-align:center;padding:10px 4px;">${p.sat}</td>`).join('')}
+              </tr>
+              <tr>
+                <td style="padding:10px 0;font-weight:500;">❤️ Ø Gesundheit</td>
+                ${periodData.map(p=>`<td style="text-align:center;padding:10px 4px;">${p.gesundheit}</td>`).join('')}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="height:16px;"></div>`;
+  }
+}
+
+// ─── MEHR ────────────────────────────────────────────────────
+function exportData() {
+  const data = {meals, weights, goals, exported: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`esstracker_${today()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 Export gestartet!');
+}
+
+function importData() {
+  document.getElementById('import-file').click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(data.meals) meals = data.meals;
+      if(data.weights) weights = data.weights;
+      if(data.goals) goals = data.goals;
+      save();
+      toast('✅ Daten importiert!');
+    } catch(err) {
+      toast('❌ Fehler beim Importieren');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function confirmDelete() {
+  if(confirm('Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
+    meals=[]; weights=[]; goals={meals:'3–5',weight:null};
+    save();
+    toast('🗑️ Alle Daten gelöscht');
+  }
+}
+
+function openGoals() {
+  document.getElementById('g-meals').value = goals.meals || '3–5';
+  if(goals.weight) document.getElementById('g-weight').value = goals.weight;
+  document.getElementById('goals-modal').classList.add('open');
+}
+
+function closeGoals() {
+  document.getElementById('goals-modal').classList.remove('open');
+}
+
+function closeGoalsIfOutside(e) {
+  if(e.target===document.getElementById('goals-modal')) closeGoals();
+}
+
+function saveGoals() {
+  goals.meals = document.getElementById('g-meals').value;
+  const w = parseFloat(document.getElementById('g-weight').value);
+  if(!isNaN(w)) goals.weight = w;
+  save();
+  closeGoals();
+  toast('✅ Ziele gespeichert!');
+}
+
+function showAbout() {
+  alert('EssTracker V1.0\n\nEine PWA zum Tracken von Mahlzeiten, Wohlbefinden und Gewicht.\nAlle Daten werden lokal auf deinem Gerät gespeichert.\n\n© 2026');
+}
+
+// ─── NAVIGATION vom Dashboard aus ────────────────────────────
+function goToListe() { switchTab('liste'); }
+
+// ─── SERVICE WORKER ──────────────────────────────────────────
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+renderDashboard();
+</script>
+</body>
+</html>
